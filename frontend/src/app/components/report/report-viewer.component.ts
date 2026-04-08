@@ -199,8 +199,13 @@ export class ReportViewerComponent implements OnInit {
     this.submitError = null;
     this.reportService.submitRun(this.currentRun.id).subscribe({
       next: () => {
-        this.submitMessage = '已提交审批';
-        this.loadCurrentRunForSelectedReport();
+        // 提交成功后发送邮件通知
+        this.reportService.sendEmailToChecker(this.currentRun!.reportId).subscribe({
+          next: (emailResponse) => {
+            this.submitMessage = `已提交审批，邮件已发送至 ${emailResponse.email} (环境: ${emailResponse.profile})`;
+            this.loadCurrentRunForSelectedReport();
+          }
+        });
       },
       error: (err) => {
         this.submitError = '提交审批失败: ' + (err.error?.message || err.message || '');

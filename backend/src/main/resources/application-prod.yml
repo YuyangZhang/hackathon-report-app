@@ -1,0 +1,5 @@
+# 生产环境配置
+email:
+  active-profile: prod
+  groups:
+    prod: checker-prod@example.com

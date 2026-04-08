@@ -1,0 +1,5 @@
+# QA环境配置
+email:
+  active-profile: qa
+  groups:
+    qa: checker-qa@example.com

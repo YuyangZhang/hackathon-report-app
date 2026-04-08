@@ -118,4 +118,15 @@ export class ReportService {
       responseType: 'blob'
     });
   }
+
+  // 邮件相关接口
+  getCheckerEmailGroup(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/email/checker-group`);
+  }
+
+  sendEmailToChecker(reportId: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/email/send-to-checker`, null, {
+      params: { reportId: reportId.toString() }
+    });
+  }
 }
