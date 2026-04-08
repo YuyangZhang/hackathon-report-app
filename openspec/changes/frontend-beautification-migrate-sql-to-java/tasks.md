@@ -74,7 +74,7 @@
 ## Phase 3: Frontend Beautification
 
 ### Task 3.1: Setup UI Framework
-**Description**: Add and configure UI framework (Angular Material or Tailwind)
+**Description**: Add and configure UI framework (Angular Material or Tailwind) in frontend folder
 **Acceptance Criteria**:
 - [ ] Install Angular Material dependencies
 - [ ] Configure theme with custom colors
