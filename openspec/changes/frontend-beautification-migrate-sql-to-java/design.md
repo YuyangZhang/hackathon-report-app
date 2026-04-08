@@ -49,18 +49,24 @@ This document describes the technical approach for modernizing the frontend UI a
 
 ### Frontend
 
-1. **UI Framework**: Angular Material or custom Tailwind CSS components
+1. **UI Framework**: Angular Material
    - Provides pre-built, accessible components
    - Consistent design language
    - Easy theming support
 
-2. **Responsive Design**: CSS Grid and Flexbox
+2. **External Resources Required**:
+   - **Material Icons**: Google Fonts icon library (CDN link in index.html)
+     ```html
+     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+     ```
+   - **Roboto Font**: Material Design typography font (CDN link in index.html)
+     ```html
+     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+     ```
+
+3. **Responsive Design**: CSS Grid and Flexbox
    - Mobile-first approach
    - Adaptive layouts for different screen sizes
-
-3. **Icons**: Lucide or Material Icons
-   - Lightweight, modern icon set
-   - Easy integration with Angular
 
 ### Backend
 

@@ -76,10 +76,13 @@
 ### Task 3.1: Setup UI Framework
 **Description**: Add and configure UI framework (Angular Material or Tailwind) in frontend folder
 **Acceptance Criteria**:
-- [ ] Install Angular Material dependencies
-- [ ] Configure theme with custom colors
+- [ ] Install Angular Material dependencies (`@angular/material`, `@angular/cdk`)
+- [ ] Configure theme with custom colors in `styles.css`
+- [ ] **Add Material Icons font link to `index.html`**: `<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">`
+- [ ] **Add Roboto font link to `index.html`**: `<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">`
 - [ ] Setup typography styles
-- [ ] Import required modules (MatButton, MatCard, MatTable, etc.)
+- [ ] Import required Angular Material modules (MatButton, MatCard, MatTable, MatIcon, etc.)
+- [ ] **Verify icons display correctly in browser preview**
 
 ### Task 3.2: Redesign Report List Page
 **Description**: Modernize the report list view with improved UX
