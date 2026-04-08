@@ -1,0 +1,7 @@
+name: frontend-beautification-migrate-sql-to-java
+spec: spec-driven
+status: ready
+artifacts:
+  proposal: done
+  design: done
+  tasks: done
