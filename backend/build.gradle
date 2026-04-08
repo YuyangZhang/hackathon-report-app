@@ -2,13 +2,38 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.4'
     id 'io.spring.dependency-management' version '1.1.4'
+    id 'jacoco'
 }
 
 group = 'com.legacy'
 version = '1.0.0'
 
+def restAssuredVersion = '5.5.0'
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets {
+    integrationTest {
+        java.srcDir file('src/integrationTest/java')
+        resources.srcDir file('src/integrationTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+    apiTest {
+        java.srcDir file('src/apiTest/java')
+        resources.srcDir file('src/apiTest/resources')
+        compileClasspath += sourceSets.main.output + sourceSets.test.output + configurations.testRuntimeClasspath
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+configurations {
+    integrationTestImplementation.extendsFrom testImplementation
+    integrationTestRuntimeOnly.extendsFrom testRuntimeOnly
+    apiTestImplementation.extendsFrom testImplementation
+    apiTestRuntimeOnly.extendsFrom testRuntimeOnly
 }
 
 repositories {
@@ -38,8 +63,58 @@ dependencies {
     implementation "org.jxls:jxls-poi:${jxlsVersion}"
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.mockito:mockito-junit-jupiter'
+
+    integrationTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    integrationTestImplementation 'com.h2database:h2'
+    integrationTestImplementation "io.rest-assured:rest-assured:${restAssuredVersion}"
+
+    apiTestImplementation 'org.springframework.boot:spring-boot-starter-test'
+    apiTestImplementation "io.rest-assured:rest-assured:${restAssuredVersion}"
+    apiTestImplementation 'com.h2database:h2'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs backend integration tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    shouldRunAfter tasks.named('test')
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+}
+
+tasks.register('apiTest', Test) {
+    description = 'Runs backend API verification tests.'
+    group = 'verification'
+    testClassesDirs = sourceSets.apiTest.output.classesDirs
+    classpath = sourceSets.apiTest.runtimeClasspath
+    shouldRunAfter tasks.named('integrationTest')
+    useJUnitPlatform()
+    systemProperty 'spring.profiles.active', 'test'
+}
+
+jacoco {
+    toolVersion = '0.8.12'
+}
+
+tasks.register('jacocoAggregateReport', JacocoReport) {
+    dependsOn tasks.named('test'), tasks.named('integrationTest'), tasks.named('apiTest')
+    executionData.from(fileTree(layout.buildDirectory).include('jacoco/*.exec', 'jacoco/*.ec'))
+    sourceDirectories.from files(sourceSets.main.allSource.srcDirs)
+    classDirectories.from files(sourceSets.main.output)
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('integrationTest'), tasks.named('apiTest'), tasks.named('jacocoAggregateReport')
 }
