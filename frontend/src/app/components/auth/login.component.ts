@@ -2,73 +2,163 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { MatCardModule } from '@angular/material/card';
+import { MatInputModule } from '@angular/material/input';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatCardModule,
+    MatInputModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule
+  ],
   template: `
-    <div class="login-container">
-      <h1>报表管理系统登录</h1>
+    <div class="login-wrapper">
+      <mat-card class="login-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon color="primary">assessment</mat-icon>
+            报表管理系统
+          </mat-card-title>
+          <mat-card-subtitle>请登录以继续</mat-card-subtitle>
+        </mat-card-header>
 
-      <div *ngIf="authService.isLoggedIn(); else loginForm">
-        <p>当前已登录用户：{{ authService.getCurrentUser()?.username }}</p>
-        <button (click)="goAfterLogin()">进入系统</button>
-      </div>
+        <mat-card-content>
+          <div *ngIf="authService.isLoggedIn(); else loginForm" class="logged-in-section">
+            <p class="success-message">
+              <mat-icon color="primary">check_circle</mat-icon>
+              已登录: {{ authService.getCurrentUser()?.username }}
+            </p>
+            <button mat-raised-button color="primary" (click)="goAfterLogin()">
+              进入系统
+            </button>
+          </div>
 
-      <ng-template #loginForm>
-        <form (ngSubmit)="onSubmit()" class="login-form">
-          <label>
-            用户名：
-            <input [(ngModel)]="username" name="username" required />
-          </label>
+          <ng-template #loginForm>
+            <form (ngSubmit)="onSubmit()" class="login-form">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>用户名</mat-label>
+                <input matInput [(ngModel)]="username" name="username" required
+                       placeholder="请输入用户名">
+                <mat-icon matPrefix>person</mat-icon>
+              </mat-form-field>
 
-          <label>
-            密码：
-            <input type="password" [(ngModel)]="password" name="password" required />
-          </label>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>密码</mat-label>
+                <input matInput [(ngModel)]="password" name="password" required
+                       type="password" placeholder="请输入密码">
+                <mat-icon matPrefix>lock</mat-icon>
+              </mat-form-field>
 
-          <button type="submit" [disabled]="loggingIn">登录</button>
+              <div class="error-message" *ngIf="loginError">
+                <mat-icon color="warn">error</mat-icon>
+                {{ loginError }}
+              </div>
 
-          <div *ngIf="loginError" class="error">{{ loginError }}</div>
-        </form>
-      </ng-template>
+              <button mat-raised-button color="primary" type="submit"
+                      [disabled]="loggingIn" class="full-width login-button">
+                <mat-spinner diameter="20" *ngIf="loggingIn"></mat-spinner>
+                <span *ngIf="!loggingIn">登录</span>
+              </button>
+            </form>
+          </ng-template>
+        </mat-card-content>
+      </mat-card>
     </div>
   `,
   styles: [`
-    .login-container {
-      max-width: 400px;
-      margin: 80px auto;
+    .login-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 64px);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       padding: 24px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
-    .login-form label {
-      display: block;
-      margin: 12px 0;
-    }
-    .login-form input {
+
+    .login-card {
       width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+
+    mat-card-header {
+      justify-content: center;
+      text-align: center;
+      padding-top: 24px;
+    }
+
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 24px !important;
+      font-weight: 500 !important;
+    }
+
+    mat-card-subtitle {
+      text-align: center;
+      margin-top: 8px !important;
+    }
+
+    .login-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-top: 24px;
+    }
+
+    .full-width {
+      width: 100%;
+    }
+
+    .login-button {
+      height: 48px;
+      font-size: 16px;
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .error-message {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f44336;
+      font-size: 14px;
       padding: 8px;
-      box-sizing: border-box;
+      background: #ffebee;
+      border-radius: 4px;
     }
-    button {
-      padding: 8px 16px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-      margin-top: 8px;
+
+    .logged-in-section {
+      text-align: center;
+      padding: 24px;
     }
-    button[disabled] {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .error {
-      color: red;
-      margin-top: 8px;
+
+    .success-message {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #4caf50;
+      font-size: 16px;
+      margin-bottom: 24px;
     }
   `]
 })
@@ -82,7 +172,8 @@ export class LoginComponent implements OnInit {
   constructor(
     public authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -91,6 +182,7 @@ export class LoginComponent implements OnInit {
 
   onSubmit(): void {
     if (!this.username || !this.password) {
+      this.loginError = '请输入用户名和密码';
       return;
     }
     this.loggingIn = true;
@@ -99,6 +191,7 @@ export class LoginComponent implements OnInit {
     this.authService.login(this.username, this.password).subscribe({
       next: () => {
         this.loggingIn = false;
+        this.snackBar.open('登录成功！', '确定', { duration: 3000 });
         this.goAfterLogin();
       },
       error: (err) => {

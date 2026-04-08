@@ -31,6 +31,9 @@ public class ReportRunService {
     private ReportService reportService;
 
     @Autowired
+    private SqlQueryService sqlQueryService;
+
+    @Autowired
     private ReportRunRepository reportRunRepository;
 
     @Autowired
@@ -85,8 +88,8 @@ public class ReportRunService {
 
         logger.info("event=report_run_execute_start reportId={} maker={}", reportId, currentUser.getUsername());
 
-        // 先执行报表，保持原有行为
-        List<Map<String, Object>> data = reportService.runReport(report.getSql());
+        // Execute report with safe SQL execution (business logic in Java)
+        List<Map<String, Object>> data = sqlQueryService.runReport(report.getSql());
 
         // 创建 ReportRun 记录
         ReportRun run = new ReportRun();

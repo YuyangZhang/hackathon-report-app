@@ -1,67 +1,155 @@
 package com.legacy.report.service;
 
-import com.legacy.report.dao.ReportDao;
 import com.legacy.report.model.Report;
+import com.legacy.report.repository.ReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class ReportService {
-    
+
     @Autowired
-    private ReportDao reportDao;
-    
-    // 业务逻辑全部堆在这里，一个方法几百行
+    private ReportRepository reportRepository;
+
+    @Autowired
+    private SqlQueryService sqlQueryService;
+
+    /**
+     * Get all active reports (not deleted).
+     * Business logic: Filter deleted reports in Java, not SQL.
+     */
     public List<Report> getAllReports() {
-        return reportDao.findAll();
+        return reportRepository.findByIsDeleted(0);
     }
-    
+
+    /**
+     * Get report by ID.
+     * Business logic: Check if report is active in Java layer.
+     */
     public Report getReportById(Long id) {
-        return reportDao.findById(id);
+        return reportRepository.findByIdAndIsDeleted(id, 0)
+                .orElseThrow(() -> new RuntimeException("Report not found or has been deleted"));
     }
-    
-    // 直接执行SQL，没有任何校验，这是严重的安全漏洞
-    public List<Map<String, Object>> runReport(String sql) {
-        return reportDao.executeSql(sql);
-    }
-    
-    // 没有参数校验，没有异常处理
+
+    /**
+     * Create a new report with validation.
+     * Business logic: Input validation in Java, not SQL constraints.
+     */
+    @Transactional
     public void createReport(Report report) {
-        if (report.getName() == null || report.getName().isEmpty()) {
-            throw new RuntimeException("名称不能为空");
-        }
-        if (report.getSql() == null || report.getSql().isEmpty()) {
-            throw new RuntimeException("SQL不能为空");
-        }
-        // 没有校验SQL内容是否合法，可能导致注入
-        reportDao.save(report);
+        validateReport(report);
+        report.setIsDeleted(0);
+        reportRepository.save(report);
     }
-    
-    // 复杂的业务逻辑全部在这个方法里，没有拆分
+
+    /**
+     * Update an existing report.
+     * Business logic: Check existence and validate in Java.
+     */
+    @Transactional
+    public void updateReport(Long id, Report reportUpdate) {
+        Report existingReport = getReportById(id);
+        validateReport(reportUpdate);
+
+        existingReport.setName(reportUpdate.getName());
+        existingReport.setSql(reportUpdate.getSql());
+        existingReport.setDescription(reportUpdate.getDescription());
+
+        reportRepository.save(existingReport);
+    }
+
+    /**
+     * Soft delete a report.
+     * Business logic: Soft delete implemented in Java, not SQL.
+     */
+    @Transactional
+    public void deleteReport(Long id) {
+        Report report = getReportById(id);
+        report.setIsDeleted(1);
+        reportRepository.save(report);
+    }
+
+    /**
+     * Generate report with safe SQL execution.
+     * Business logic: SQL validation and safe parameter handling in Java.
+     */
     public Map<String, Object> generateReport(Long reportId, String params) {
-        Report report = reportDao.findById(reportId);
-        if (report == null) {
-            throw new RuntimeException("报表不存在");
-        }
-        
+        Report report = getReportById(reportId);
         String sql = report.getSql();
-        
-        // 没有预处理，直接拼接参数（SQL注入风险）
-        if (params != null && !params.isEmpty()) {
-            sql = sql + " WHERE " + params;
-        }
-        
-        // 直接执行用户传入的SQL
-        List<Map<String, Object>> data = reportDao.executeSql(sql);
-        
-        // 没有计算逻辑，直接返回原始数据
+
+        // Safe SQL execution with business logic validation
+        List<Map<String, Object>> data = sqlQueryService.executeSafeQuery(sql, params);
+
+        // Business logic: Calculate derived metrics in Java
+        Map<String, Object> summary = calculateReportSummary(data);
+
         return Map.of(
-            "reportName", report.getName(),
-            "data", data,
-            "count", data.size()
+                "reportName", report.getName(),
+                "data", data,
+                "count", data.size(),
+                "summary", summary
+        );
+    }
+
+    /**
+     * Execute a report by ID and return raw data.
+     * Business logic: Safe execution with validation.
+     */
+    public List<Map<String, Object>> executeReport(Long reportId) {
+        Report report = getReportById(reportId);
+        return sqlQueryService.executeSafeQuery(report.getSql(), null);
+    }
+
+    /**
+     * Business logic: Validate report data in Java.
+     */
+    private void validateReport(Report report) {
+        if (report.getName() == null || report.getName().trim().isEmpty()) {
+            throw new IllegalArgumentException("Report name cannot be empty");
+        }
+        if (report.getSql() == null || report.getSql().trim().isEmpty()) {
+            throw new IllegalArgumentException("Report SQL cannot be empty");
+        }
+        if (report.getName().length() > 200) {
+            throw new IllegalArgumentException("Report name cannot exceed 200 characters");
+        }
+        if (report.getSql().length() > 4000) {
+            throw new IllegalArgumentException("Report SQL cannot exceed 4000 characters");
+        }
+        // Security: Validate SQL doesn't contain dangerous operations
+        sqlQueryService.validateSql(report.getSql());
+    }
+
+    /**
+     * Business logic: Calculate summary statistics in Java instead of SQL.
+     */
+    private Map<String, Object> calculateReportSummary(List<Map<String, Object>> data) {
+        if (data == null || data.isEmpty()) {
+            return Map.of("totalRows", 0, "hasData", false);
+        }
+
+        int totalRows = data.size();
+        boolean hasData = totalRows > 0;
+
+        // Count numeric columns
+        int numericColumns = 0;
+        if (!data.isEmpty()) {
+            Map<String, Object> firstRow = data.get(0);
+            for (Object value : firstRow.values()) {
+                if (value instanceof Number) {
+                    numericColumns++;
+                }
+            }
+        }
+
+        return Map.of(
+                "totalRows", totalRows,
+                "hasData", hasData,
+                "numericColumns", numericColumns
         );
     }
 }
