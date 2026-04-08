@@ -14,7 +14,7 @@ description: end-to-end workflow for turning a requirements doc into a merged PR
       git branch --show-current
       ```
 
-2. **Phase 1 — Planning (Planner role)**
+2. **Phase 1 — Planning (Planner role · Skill: doc-coauthoring)**
    1. Run Spec Kit (`spec-kit init` / `spec-kit update`) to generate a new spec file under `spec/` (e.g., `spec/<slug>-<date>.md`). Capture requirements, assumptions, risks, and explicit tasks.
    2. Immediately create/update a local workflow checklist that mirrors the spec deliverables:
       - Store it under `checklist/<spec-file-name>.md` so it matches the spec filename (e.g., `spec/manual-report-edit-20260408.md` ↔ `checklist/manual-report-edit-20260408.md`). The `checklist/` directory is gitignored on purpose so you can freely mark progress.
@@ -33,7 +33,7 @@ description: end-to-end workflow for turning a requirements doc into a merged PR
    4. Mirror the finalized requirements into `docs/maker-checker-spec.md` so the canonical system spec stays current (summaries, API updates, risks, etc.). Mention in chat which sections changed.
    5. Share the spec summary in chat and commit the spec before implementation begins.
 
-3. **Phase 2 — Implementation & Local Validation (Executor/Tester roles)**
+3. **Phase 2 — Implementation & Local Validation (Executor/Tester roles · Skill: doc-to-pr-pipeline)**
    1. Checkout a feature branch derived from the spec summary:
       ```powershell
       git checkout -b feature/<slug>-<yyyymmdd>
@@ -47,7 +47,7 @@ description: end-to-end workflow for turning a requirements doc into a merged PR
         ```
    3. Keep rerunning the project's test suite and capture coverage numbers locally. Address failures before moving on.
 
-4. **Phase 3 — Push & Create/Update PR (Executor role)**
+4. **Phase 3 — Push & Create/Update PR (Executor role · Skill: doc-to-pr-pipeline)**
    1. Ensure commits are squashed/fixup as required, then push the feature branch (same name) to origin:
       ```powershell
       git push -u origin HEAD
@@ -58,14 +58,15 @@ description: end-to-end workflow for turning a requirements doc into a merged PR
       ```
       - If a PR already exists, skip creation and continue pushing updates.
 
-5. **Phase 4 — Review Loop (Viewer/Reviewer roles)**
+5. **Phase 4 — Review Loop (Viewer/Reviewer roles · Skill: gh-pr-review)**
    1. Run the `/review` workflow (or invoke the `gh-pr-review` skill) to produce a formal review with file/line references before declaring the PR ready.
    2. Viewer inspects the PR via `gh pr view`/`gh pr diff` (or the `gh-pr-review` skill) and leaves explicit inline comments for all issues.
-   3. Viewer signals the executor when the review pass is complete.
-   4. Executor implements fixes, reruns tests, squashes commits, and pushes to origin.
-   5. Viewer repeats review until there are zero unresolved comments and coverage remains ≥70%.
+   3. When the reviewer believes the PR is good, they must still leave a closing “no-questions” comment (e.g., `gh pr review --comment --body "LGTM"`) in the PR to document approval before exiting the workflow.
+   4. Viewer signals the executor when the review pass is complete.
+   5. Executor implements fixes, reruns tests, squashes commits, and pushes to origin.
+   6. Viewer repeats review until there are zero unresolved comments and coverage remains ≥70%.
 
-6. **Phase 5 — Quality Gates & Completion Output**
+6. **Phase 5 — Quality Gates & Completion Output (Skill: doc-to-pr-pipeline)**
    1. Confirm all automated/manual tests pass.
    2. Ensure global coverage > 70% and capture the numeric output in chat.
    3. If you need to review artifacts under gitignored directories (e.g., `build/reports/tests`), read them via PowerShell `Get-Content` instead of IDE viewers.
