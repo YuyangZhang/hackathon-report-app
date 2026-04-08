@@ -45,6 +45,9 @@ public class ReportRunService {
     @Autowired
     private ReportAuditEventRepository reportAuditEventRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     private Counter generatedCounter;
     private Counter submittedCounter;
     private Counter approvedCounter;
@@ -163,6 +166,11 @@ public class ReportRunService {
 
         logger.info("event=report_run_submit_success runId={} reportId={} maker={}",
                 saved.getId(), saved.getReportId(), currentUser.getUsername());
+
+        // 记录邮件通知日志
+        String checkerEmail = emailService.getCheckerEmailGroup();
+        logger.info("event=email_notification_sent runId={} reportId={} maker={} checkerEmail={} profile={}",
+                saved.getId(), saved.getReportId(), currentUser.getUsername(), checkerEmail, emailService.getActiveProfile());
 
         return saved;
     }
